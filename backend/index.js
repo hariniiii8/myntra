@@ -70,8 +70,20 @@ const Design = mongoose.model("Design", {
 )
 
 app.post('/submitdesign',async(req,res)=>{
+
+    let designs=await Design.find({});
+    let id;
+    if(designs.length>0)
+    {
+        let last_design_array=designs.slice(-1);
+        let last_design=last_design_array[0];
+        id=last_design.id+1;
+    }
+    else{
+        id:1;
+    }
     const design=new Design({
-        id:req.body.id,
+        id:id,
         name:req.body.name,
         image:req.body.image,
         category:req.body.category,

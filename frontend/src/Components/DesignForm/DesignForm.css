@@ -1,0 +1,21 @@
+body {
+    font-family: Arial, sans-serif;
+  }
+  
+  div {
+    margin-bottom: 10px;
+  }
+  
+  label {
+    margin-right: 10px;
+  }
+  
+  button {
+    margin-top: 10px;
+  }
+  .thumbnail-image {
+    width: 150px; /* Adjust the width as needed */
+    height: auto; /* Maintains aspect ratio */
+    object-fit: cover; /* Ensures the image covers the specified dimensions */
+  }
+    
