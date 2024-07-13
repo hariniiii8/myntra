@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-
 import './DesignForm.css';
-import upload_area from '../Assets/upload_area.svg'
+import upload_area from '../Assets/upload_area.svg';
 
 const DesignForm = () => {
   const [image, setImage] = useState(false);
@@ -10,49 +9,71 @@ const DesignForm = () => {
     image: "",
     category: "",
     gender: ""
-  })
+  });
 
   const imageHandler = (e) => {
     setImage(e.target.files[0]);
-  }
+  };
 
   const changeHandler = (e) => {
-    setDesignDetails({ ...designDetails, [e.target.name]: e.target.value })
-  }
+    setDesignDetails({ ...designDetails, [e.target.name]: e.target.value });
+  };
+
   const Submit_Design = async () => {
-    console.log(designDetails);
+    console.log('Submitting Design:', designDetails);
     let responseData;
     let design = designDetails;
 
     let formData = new FormData();
     formData.append('design', image);
 
-    await fetch('http://localhost:4000/upload', {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-      },
-      body: formData,
-
-    }).then((resp) => resp.json()).then((data) => { responseData = data })
-    if (responseData.success) {
-      design.image = responseData.image_url;
-      console.log(design);
-
-      await fetch('http://localhost:4000/submitdesign', {
+    try {
+      const uploadResponse = await fetch('http://localhost:4000/upload', {
         method: 'POST',
         headers: {
           Accept: 'application/json',
-          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(design),
+        body: formData,
+      });
+      
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to upload image');
+      }
 
-      }).then((resp) => resp.json()).then((data) => {
-        data.success ? alert("Design Submitted") : alert("Failed to submit")
-      })
+      responseData = await uploadResponse.json();
+      
+      if (responseData.success) {
+        design.image = responseData.image_url;
+        console.log('Design after image upload:', design);
+
+        const submitResponse = await fetch('http://localhost:4000/submitdesign', {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(design),
+        });
+        
+        if (!submitResponse.ok) {
+          throw new Error('Failed to submit design');
+        }
+
+        const submitData = await submitResponse.json();
+        
+        if (submitData.success) {
+          alert("Design Submitted");
+        } else {
+          alert("Failed to submit design");
+        }
+      } else {
+        alert("Image upload failed");
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert(`Error: ${error.message}`);
     }
-
-  }
+  };
 
   return (
     <form>
@@ -70,18 +91,26 @@ const DesignForm = () => {
       </div>
       <div>
         <label htmlFor="category">Category:</label>
-        <select name="category" className='design-select' id="category" value={designDetails.category}
+        <select
+          name="category"
+          className='design-select'
+          id="category"
+          value={designDetails.category}
           onChange={changeHandler}
         >
           <option value="pant">Pants</option>
-          <option value="top">Tops</option>
-          <option value="dress">Dresses</option>
+          <option value="tops">Tops</option>
+          <option value="dresses">Dresses</option>
           <option value="ethnic">Ethnic</option>
         </select>
       </div>
       <div>
         <label htmlFor="gender">Gender:</label>
-        <select name="gender" className='design-selector' id="gender" value={designDetails.gender}
+        <select
+          name="gender"
+          className='design-selector'
+          id="gender"
+          value={designDetails.gender}
           onChange={changeHandler}
         >
           <option value="women">Women</option>
@@ -96,11 +125,10 @@ const DesignForm = () => {
         </label>
         <input onChange={imageHandler} type="file" name="image" id="file-input" hidden />
       </div>
-      <button type="button" onClick={() => Submit_Design()}>
+      <button type="button" onClick={Submit_Design}>
         Submit Design
       </button>
     </form>
-
   );
 };
 
