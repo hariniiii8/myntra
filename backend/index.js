@@ -25,15 +25,22 @@ mongoose.connect(mongoURI)
         console.error("Error connecting to MongoDB:", error.message);
     });
 
-const storage = multer.diskStorage({
-    destination: './upload/images',
-    filename: (req, file, cb) => {
-        return cb(null, `${file.fieldname}_${Date.now()}${path.extname(file.originalname)}`);
-    }
-});
-
-const upload = multer({ storage: storage });
-app.use('/images', express.static('upload/images'));
+    const storage = multer.diskStorage({
+        destination: './upload/images',
+        filename: (req, file, cb) => {
+            return cb(null, `${file.fieldname}_${Date.now()}${path.extname(file.originalname)}`);
+        }
+    });
+    
+    const upload = multer({ storage: storage });
+    app.use('/images', express.static('upload/images'));
+    
+    app.post("/upload", upload.single('design'), (req, res) => {
+        res.json({
+            success: 1,
+            image_url: `http://localhost:${port}/images/${req.file.filename}`
+        });
+    });
 
 const Design = mongoose.model("Design", {
     id: {
@@ -113,8 +120,11 @@ const Users = mongoose.model('Users', {
     date:{
         type :Date,
         default :Date.now,
-    }
-});
+    },
+   votedDesigns: {
+        type: [String], 
+        default: [],
+}});
 
 app.post('/signup', async (req, res) => {
     let check = await Users.findOne({email: req.body.email});
@@ -163,7 +173,27 @@ app.post('/login', async (req,res) => {
     }
 });
 
+
+const fetchUser = (req, res, next) => {
+    const token=req.header('auth-token');
+    if(!token){
+        res.status(401).send({errors:"Please aythenticate usign valid token"});
+    
+}
+else{
+    try{
+        const data = jwt.verify(token,'secret_ecom');
+        req.user = data.user;
+        next();
+    }
+    catch(err){
+        res.status(400).send({errors:"Invalid Token"});
+    }
+
+}}
+
 app.post('/increasevotes', async (req, res) => {
+    console.log(req.user, req.body);
     const { id } = req.body;
     try {
         const design = await Design.findById(id);
@@ -185,4 +215,4 @@ app.listen(port, (error) => {
     } else {
         console.log("Error: " + error);
     }
-});
+}); 

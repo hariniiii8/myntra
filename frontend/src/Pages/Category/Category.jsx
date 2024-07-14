@@ -20,23 +20,24 @@ const Category = (props) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'auth-token': localStorage.getItem('token'), // Assuming token is stored in localStorage
         },
         body: JSON.stringify({ id: designId }),
       });
-
+  
       if (!response.ok) {
         throw new Error('Failed to increase votes');
       }
-
+  
       const updatedDesign = await response.json();
       console.log('Updated votes:', updatedDesign.votes);
-
+  
       // Update local state for votes
       setLocalVotes((prevVotes) => ({
         ...prevVotes,
         [designId]: updatedDesign.votes,
       }));
-
+  
       // Update all_designs context or state if necessary
       setAllDesigns((prevDesigns) =>
         prevDesigns.map((design) =>
@@ -44,9 +45,16 @@ const Category = (props) => {
         )
       );
     } catch (error) {
-      console.error('Error voting:', error);
-      // Handle error gracefully, show error message to the user
+      console.error('Error voting:', error.message);
+      // Handle error gracefully, show error message to the user if needed
     }
+  };
+  
+
+  // Function to sort designs by votes in descending order
+  const sortDesignsByVotes = () => {
+    const sortedDesigns = [...all_designs].sort((a, b) => b.votes - a.votes);
+    return sortedDesigns;
   };
 
   return (
@@ -56,7 +64,7 @@ const Category = (props) => {
       </p>
 
       <div className="designcategory-products">
-        {all_designs.map((item, index) => {
+        {sortDesignsByVotes().map((item, index) => {
           if (props.category === item.category.toLowerCase()) {
             return (
               <div className="designcategory-product" key={index}>
